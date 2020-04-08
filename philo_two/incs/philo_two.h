@@ -6,7 +6,7 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 11:45:12 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 00:00:28 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 00:02:24 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ typedef struct			s_simulation
 	struct timeval		start_time;
 	sem_t				can_write;
 	int					have_a_death;
-	sem_t				*forks;
+	sem_t				forks;
 	t_philosopher		*philosophers;
 	long unsigned		number_of_philosopher;
 	long unsigned		time_to_die;

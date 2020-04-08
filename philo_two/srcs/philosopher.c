@@ -6,7 +6,7 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:18:48 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:56:40 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 00:03:56 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,9 @@ static void		eat(
 	t_philosopher *philosopher
 )
 {
-	sem_wait(philosopher->simulation->forks);
+	sem_wait(&philosopher->simulation->forks);
 	philosopher->take_fork_l = 1;
-	sem_wait(philosopher->simulation->forks);
+	sem_wait(&philosopher->simulation->forks);
 	philosopher->take_fork_r = 1;
 	philosopher->is_on_eat = 1;
 	philosopher->is_eating = 1;
@@ -34,8 +34,8 @@ static void		eat(
 	wait_for(philosopher->last_time_eated,
 		philosopher->simulation->time_to_eat * 1000);
 	philosopher->is_on_eat = 0;
-	sem_post(philosopher->simulation->forks);
-	sem_post(philosopher->simulation->forks);
+	sem_post(&philosopher->simulation->forks);
+	sem_post(&philosopher->simulation->forks);
 	philosopher->number_meal++;
 }
 

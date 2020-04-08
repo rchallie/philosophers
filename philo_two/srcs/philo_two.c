@@ -6,7 +6,7 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 00:00:02 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 00:04:31 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,7 @@ static t_philosopher	*init_philosophers(
 	t_philosopher		*philosophers;
 
 	i = 0;
-	if (!(philosophers = malloc(sizeof(t_philosopher) * number_of_philosopher))
-		|| !sim->forks)
+	if (!(philosophers = malloc(sizeof(t_philosopher) * number_of_philosopher)))
 		return (NULL);
 	memset(philosophers, 0, sizeof(t_philosopher) * number_of_philosopher);
 	while (i < number_of_philosopher)
@@ -47,21 +46,6 @@ static t_philosopher	*init_philosophers(
 		i++;
 	}
 	return (philosophers);
-}
-
-static sem_t			*init_forks(
-	long unsigned number_of_philosopher
-)
-{
-	long unsigned		i;
-	sem_t				*forks;
-
-	i = 0;
-	if (!(forks = malloc(sizeof(sem_t) * 1)))
-		return (NULL);
-	memset(forks, 0, sizeof(sem_t) * 1);
-	sem_init(forks, 0, number_of_philosopher);
-	return (forks);
 }
 
 /*
@@ -92,7 +76,7 @@ static t_simulation		*init_simulation(
 	simulation->start_time = start_time;
 	simulation->can_write = can_write;
 	simulation->number_of_philosopher = ft_atolu(argv[1]);
-	simulation->forks = init_forks(ft_atolu(argv[1]));
+	sem_init(&simulation->forks, 0, ft_atolu(argv[1]));
 	simulation->time_to_die = ft_atolu(argv[2]);
 	simulation->time_to_eat = ft_atolu(argv[3]);
 	simulation->time_to_sleep = ft_atolu(argv[4]);
@@ -117,7 +101,6 @@ void					free_simulation(
 
 	i = 0;
 	free(sim->philosophers);
-	free(sim->forks);
 	free(sim);
 }
 
@@ -162,8 +145,6 @@ int						main(
 	simulation = init_simulation(argc, argv);
 	if (!simulation->philosophers)
 		return (__INIT_PHILOSOPHERS);
-	if (!simulation->forks)
-		return (__INIT_FORKS);
 	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].itsme, NULL);
 	write(1, ended, ft_strlen(ended));
