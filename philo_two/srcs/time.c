@@ -6,11 +6,11 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:07:17 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 19:56:28 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/08 23:10:54 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../incs/philo_one.h"
+#include "../incs/philo_two.h"
 
 /*
 ** @brief Get the difference between two timeval

@@ -6,17 +6,17 @@
 #    By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/04/01 21:13:09 by excalibur         #+#    #+#              #
-#    Updated: 2020/04/08 23:46:24 by excalibur        ###   ########.fr        #
+#    Updated: 2020/04/08 23:53:10 by excalibur        ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 # SIMPLE =======================================================================
-NAME = philo_one
+NAME = philo_two
 # ==============================================================================
 
 # SRCS =========================================================================
 SRCS_DIR = srcs/
-SRCS = 	philo_one.c		\
+SRCS = 	philo_two.c		\
 		time.c			\
 		utils.c			\
 		philosopher.c	\
@@ -24,7 +24,7 @@ SRCS = 	philo_one.c		\
 # ==============================================================================
 
 # INCLUDES =====================================================================
-INCS_DIR = incs/philo_one.h
+INCS_DIR = incs/philo_two.h
 # ==============================================================================
 
 # FLAGS ========================================================================
@@ -67,14 +67,13 @@ re: fclean all
 # ==============================================================================
 
 # SUP ==========================================================================
-# Not a good idea, not sure about valgrind & thread compatibility
-# (TAKE SO MUCH TIME HUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUH) need a big time to die.
+# Not a good idea, not sure about valgrind & thread compatibility.
 leaks: $(NAME)
-	@valgrind --leak-check=yes  ./$(NAME) 4 800 200 200 1 || echo $$?
+	@valgrind --leak-check=yes  ./$(NAME) 4 410 200 200 2 || echo $$?
 
 run: $(NAME)
-	@./$(NAME) 4 420 200 200 || echo $$?
+	@./$(NAME) 4 480 200 200 || echo $$?
 
 runb: $(NAME)
-	@./$(NAME) 4 420 200 200 2 || echo $$?
+	@./$(NAME) 4 410 200 200 2 || echo $$?
 # ==============================================================================

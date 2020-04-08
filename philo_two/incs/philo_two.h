@@ -1,19 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_one.h                                        :+:      :+:    :+:   */
+/*   philo_two.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 11:45:12 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 20:56:02 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 00:00:28 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PHILO_ONE_H
-# define PHILO_ONE_H
+#ifndef PHILO_TWO_H
+# define PHILO_TWO_H
 
 # include <pthread.h>
+# include <semaphore.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <sys/time.h>
@@ -46,9 +47,9 @@ typedef struct			s_philosopher
 typedef struct			s_simulation
 {
 	struct timeval		start_time;
-	pthread_mutex_t		can_write;
+	sem_t				can_write;
 	int					have_a_death;
-	pthread_mutex_t		*forks;
+	sem_t				*forks;
 	t_philosopher		*philosophers;
 	long unsigned		number_of_philosopher;
 	long unsigned		time_to_die;

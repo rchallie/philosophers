@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_one.c                                        :+:      :+:    :+:   */
+/*   philo_two.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:42:33 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 00:00:02 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../incs/philo_one.h"
+#include "../incs/philo_two.h"
 
 /*
 **	@brief Initialise the philosophers for the
@@ -49,30 +49,18 @@ static t_philosopher	*init_philosophers(
 	return (philosophers);
 }
 
-/*
-** @brief Init the forks for the simulation.
-**
-** @param number_of_philosopher the number
-**	of philosopher in the simulation.
-** @return a pointer to the mutex (forks) array.
-** If an error append during mallocs or mutexs
-** initialisation, a null pointer will be returned.
-*/
-
-static pthread_mutex_t	*init_forks(
+static sem_t			*init_forks(
 	long unsigned number_of_philosopher
 )
 {
 	long unsigned		i;
-	pthread_mutex_t		*forks;
+	sem_t				*forks;
 
 	i = 0;
-	if (!(forks = malloc(sizeof(pthread_mutex_t) * number_of_philosopher)))
+	if (!(forks = malloc(sizeof(sem_t) * 1)))
 		return (NULL);
-	memset(forks, 0, sizeof(pthread_mutex_t) * number_of_philosopher);
-	while (i < number_of_philosopher)
-		if (pthread_mutex_init(&forks[i++], NULL))
-			return (NULL);
+	memset(forks, 0, sizeof(sem_t) * 1);
+	sem_init(forks, 0, number_of_philosopher);
 	return (forks);
 }
 
@@ -93,18 +81,18 @@ static t_simulation		*init_simulation(
 {
 	t_simulation		*simulation;
 	struct timeval		start_time;
-	pthread_mutex_t		can_write;
+	sem_t				can_write;
 
 	gettimeofday(&start_time, NULL);
-	pthread_mutex_init(&can_write, NULL);
+	sem_init(&can_write, 0, 1);
 	if (!(simulation = malloc(sizeof(t_simulation))))
 		return (NULL);
 	memset(simulation, 0, sizeof(t_simulation));
 	simulation->have_a_death = 0;
 	simulation->start_time = start_time;
 	simulation->can_write = can_write;
-	simulation->forks = init_forks(ft_atolu(argv[1]));
 	simulation->number_of_philosopher = ft_atolu(argv[1]);
+	simulation->forks = init_forks(ft_atolu(argv[1]));
 	simulation->time_to_die = ft_atolu(argv[2]);
 	simulation->time_to_eat = ft_atolu(argv[3]);
 	simulation->time_to_sleep = ft_atolu(argv[4]);
@@ -128,11 +116,6 @@ void					free_simulation(
 	long unsigned i;
 
 	i = 0;
-	while (i < sim->number_of_philosopher)
-	{
-		pthread_mutex_destroy(&sim->forks[i]);
-		i++;
-	}
 	free(sim->philosophers);
 	free(sim->forks);
 	free(sim);
@@ -141,7 +124,7 @@ void					free_simulation(
 /*
 ** @brief philo_one of Philosophers project
 ** from 42School. Basicaly the dining philosopher
-** problem, with obligation like use mutex,
+** problem, with obligation like use semaphores,
 ** philosophers can't speak between them, time of
 ** death, defined sleeping time, and the simulation
 ** is ended with the death of an philosopher or
@@ -162,7 +145,7 @@ void					free_simulation(
 ** datas return NULL, __INIT_PHILOSOPHERS if the
 ** philosophers datas had an error (malloc error)
 ** __INIT_FORKS if the forks datas had an error
-** (malloc error or mutex initialisation).
+** (malloc error or semaphores initialisation).
 */
 
 int						main(
@@ -183,7 +166,6 @@ int						main(
 		return (__INIT_FORKS);
 	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].itsme, NULL);
-	pthread_mutex_destroy(&simulation->can_write);
 	write(1, ended, ft_strlen(ended));
 	free_simulation(simulation);
 	return (__SUCCESS);

@@ -6,11 +6,11 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 22:04:50 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:24:15 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/08 23:58:58 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../incs/philo_one.h"
+#include "../incs/philo_two.h"
 
 /*
 ** @brief Print a message with timestamp, philosopher
@@ -51,7 +51,7 @@ static void		print_msg(
 ** @brief Check states status of philosopher
 ** and print the message associate. This is
 ** a critical part of the message the it's
-** protected by mutexs.
+** protected by semaphores.
 **
 ** @param philosopher the philosopher.
 */
@@ -60,7 +60,7 @@ static void		phi_messages(
 	t_philosopher *philosopher
 )
 {
-	pthread_mutex_lock(&philosopher->simulation->can_write);
+	sem_wait(&philosopher->simulation->can_write);
 	if (philosopher->is_thinking == 1)
 		print_msg(get_timestamp(philosopher->simulation->start_time),
 			philosopher->number, "is thinking", &philosopher->is_thinking);
@@ -76,7 +76,7 @@ static void		phi_messages(
 	if (philosopher->is_sleeping == 1)
 		print_msg(get_timestamp(philosopher->simulation->start_time),
 			philosopher->number, "is sleeping", &philosopher->is_sleeping);
-	pthread_mutex_unlock(&philosopher->simulation->can_write);
+	sem_post(&philosopher->simulation->can_write);
 }
 
 /*
@@ -96,7 +96,7 @@ static int		ate_enought(
 	if (philosopher->simulation->each_must_eat != -1 &&
 		philosopher->number_meal >= philosopher->simulation->each_must_eat)
 	{
-		pthread_mutex_unlock(&philosopher->simulation->can_write);
+		sem_post(&philosopher->simulation->can_write);
 		return (1);
 	}
 	return (0);
@@ -127,7 +127,7 @@ void			*monitor_func(
 			> philosopher->simulation->time_to_die * 1000
 			&& philosopher->is_on_eat != 1)
 		{
-			pthread_mutex_lock(&philosopher->simulation->can_write);
+			sem_post(&philosopher->simulation->can_write);
 			print_msg(get_timestamp(philosopher->simulation->start_time),
 			philosopher->number, "died", NULL);
 			philosopher->simulation->have_a_death = 1;
