@@ -6,7 +6,7 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 00:04:31 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 20:35:51 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,8 @@ static t_simulation		*init_simulation(
 	simulation->start_time = start_time;
 	simulation->can_write = can_write;
 	simulation->number_of_philosopher = ft_atolu(argv[1]);
-	sem_init(&simulation->forks, 0, ft_atolu(argv[1]));
+	simulation->forks = sem_open("/forks",
+				O_CREAT, 0644, ft_atolu(argv[1]));
 	simulation->time_to_die = ft_atolu(argv[2]);
 	simulation->time_to_eat = ft_atolu(argv[3]);
 	simulation->time_to_sleep = ft_atolu(argv[4]);
@@ -101,6 +102,7 @@ void					free_simulation(
 
 	i = 0;
 	free(sim->philosophers);
+	sem_close(sim->forks);
 	free(sim);
 }
 
@@ -141,6 +143,7 @@ int						main(
 	char			*ended;
 
 	i = 0;
+	sem_unlink("/forks");
 	ended = "Simulation ended\n";
 	simulation = init_simulation(argc, argv);
 	if (!simulation->philosophers)
