@@ -6,7 +6,7 @@
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:42:33 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/09 22:28:00 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,9 +109,9 @@ static t_simulation		*init_simulation(
 	simulation->time_to_eat = ft_atolu(argv[3]);
 	simulation->time_to_sleep = ft_atolu(argv[4]);
 	simulation->each_must_eat = -1;
-	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
 	if (argc == 6)
 		simulation->each_must_eat = ft_atolu(argv[5]);
+	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
 	return (simulation);
 }
 

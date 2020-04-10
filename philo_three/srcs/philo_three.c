@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo_two.c                                        :+:      :+:    :+:   */
+/*   philo_three.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 22:28:17 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/04/10 12:45:49 by excalibur        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../incs/philo_two.h"
+#include "../incs/philo_three.h"
 
 /*
 **	@brief Initialise the philosophers for the
@@ -25,27 +25,33 @@
 ** will be returned.
 */
 
-static t_philosopher	*init_philosophers(
+static pid_t			*init_philosophers(
 	t_simulation *sim,
 	long unsigned number_of_philosopher
 )
 {
 	long unsigned		i;
-	t_philosopher		*philosophers;
+	t_philosopher		philosopher;
+	int					chill_process;
+	pid_t				*philo_pid;
 
 	i = 0;
-	if (!(philosophers = malloc(sizeof(t_philosopher) * number_of_philosopher)))
+	if (!(philo_pid = malloc(sizeof(pid_t) * number_of_philosopher)))
 		return (NULL);
-	memset(philosophers, 0, sizeof(t_philosopher) * number_of_philosopher);
+	memset(philo_pid, 0, sizeof(pid_t) * number_of_philosopher);
 	while (i < number_of_philosopher)
 	{
-		philosophers[i] = (t_philosopher){.number = i + 1, .simulation = sim};
-		pthread_create(&philosophers[i].itsme, NULL,
-			(void*)routine, (void*)&philosophers[i]);
+		philosopher = (t_philosopher){.number = i + 1, .simulation = sim};
+		if ((chill_process = fork()) < 0)
+			exit(999);
+		if (chill_process == 0)
+			routine(&philosopher);
+		else
+			philo_pid[i] = chill_process;
 		usleep(100);
 		i++;
 	}
-	return (philosophers);
+	return (philo_pid);
 }
 
 /*
@@ -72,19 +78,20 @@ static t_simulation		*init_simulation(
 	if (!(simulation = malloc(sizeof(t_simulation))))
 		return (NULL);
 	memset(simulation, 0, sizeof(t_simulation));
-	simulation->have_a_death = 0;
 	simulation->start_time = start_time;
-	simulation->can_write = can_write;
+	simulation->can_write = sem_open("/write",
+				O_CREAT | O_EXCL, 0644, 1);
 	simulation->number_of_philosopher = ft_atolu(argv[1]);
 	simulation->forks = sem_open("/forks",
-				O_CREAT, 0644, ft_atolu(argv[1]));
+				O_CREAT | O_EXCL, 0644, ft_atolu(argv[1]));
 	simulation->time_to_die = ft_atolu(argv[2]);
 	simulation->time_to_eat = ft_atolu(argv[3]);
 	simulation->time_to_sleep = ft_atolu(argv[4]);
 	simulation->each_must_eat = -1;
 	if (argc == 6)
 		simulation->each_must_eat = ft_atolu(argv[5]);
-	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
+	simulation->philosophers_pids =
+		init_philosophers(simulation, ft_atolu(argv[1]));
 	return (simulation);
 }
 
@@ -101,8 +108,8 @@ void					free_simulation(
 	long unsigned i;
 
 	i = 0;
-	free(sim->philosophers);
 	sem_close(sim->forks);
+	sem_close(sim->can_write);
 	free(sim);
 }
 
@@ -141,15 +148,15 @@ int						main(
 	t_simulation	*simulation;
 	long unsigned	i;
 	char			*ended;
+	int				rtn;
 
 	i = 0;
 	sem_unlink("/forks");
+	sem_unlink("/write");
 	ended = "Simulation ended\n";
 	simulation = init_simulation(argc, argv);
-	if (!simulation->philosophers)
-		return (__INIT_PHILOSOPHERS);
-	while (i < simulation->number_of_philosopher)
-		pthread_join(simulation->philosophers[i++].itsme, NULL);
+	if ((rtn = wait_for_end(simulation)) != __SUCCESS)
+		return (rtn);
 	write(1, ended, ft_strlen(ended));
 	free_simulation(simulation);
 	return (__SUCCESS);
