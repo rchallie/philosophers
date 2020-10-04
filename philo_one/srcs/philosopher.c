@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   philosopher.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:18:48 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:29:46 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/04 03:06:44 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
+
+
 
 /*
 ** @brief Philosopher eat. Get forks.
@@ -24,23 +26,23 @@ static void		eat(
 	t_philosopher *philosopher
 )
 {
+	int right = (philosopher->number)
+		% philosopher->simulation->number_of_philosopher;
+	int left = philosopher->number - 1;
+
 	pthread_mutex_lock(
-		&philosopher->simulation->forks[philosopher->number - 1]);
-	philosopher->take_fork_l = 1;
-	pthread_mutex_lock(&philosopher->simulation->forks[(philosopher->number)
-		% philosopher->simulation->number_of_philosopher]);
-	philosopher->take_fork_r = 1;
-	philosopher->is_on_eat = 1;
-	philosopher->is_eating = 1;
-	gettimeofday(&philosopher->last_time_eated, NULL);
-	wait_for(philosopher->last_time_eated,
-		philosopher->simulation->time_to_eat * 1000);
-	philosopher->is_on_eat = 0;
+		&philosopher->simulation->forks[left]);
+	print_msg(philosopher, "has taken a fork");
+	pthread_mutex_lock(&philosopher->simulation->forks[right]);
+	print_msg(philosopher, "has taken a fork");
+	philosopher->last_time_eated = get_actual_time();
+	print_msg(philosopher, "eating");
+	if (philosopher->simulation->have_a_death != 1)
+		wait_for(philosopher->simulation->time_to_eat);
 	pthread_mutex_unlock(
-		&philosopher->simulation->forks[philosopher->number - 1]);
+		&philosopher->simulation->forks[left]);
 	pthread_mutex_unlock(
-		&philosopher->simulation->forks[(philosopher->number)
-		% philosopher->simulation->number_of_philosopher]);
+		&philosopher->simulation->forks[right]);
 	philosopher->number_meal++;
 }
 
@@ -62,24 +64,17 @@ void			*routine(
 )
 {
 	t_philosopher	*philosopher;
-	struct timeval	start;
 
 	philosopher = (t_philosopher*)phi;
-	gettimeofday(&philosopher->last_time_eated, NULL);
-	pthread_create(&philosopher->monitor, NULL,
-		(void*)monitor_func, (void*)philosopher);
-	pthread_detach(philosopher->monitor);
+	philosopher->last_time_eated = get_actual_time();
 	while (42 && philosopher->simulation->have_a_death == 0)
 	{
-		philosopher->is_thinking = 1;
 		eat(philosopher);
-		if (philosopher->simulation->each_must_eat != -1
-			&& philosopher->number_meal
-			>= philosopher->simulation->each_must_eat)
-			break ;
-		philosopher->is_sleeping = 1;
-		gettimeofday(&start, NULL);
-		wait_for(start, philosopher->simulation->time_to_sleep);
+		print_msg(philosopher, "sleeping");
+		if (philosopher->simulation->have_a_death == 1)
+			break;
+		usleep(philosopher->simulation->time_to_sleep * 1000);
+		print_msg(philosopher, "thinking");
 	}
 	return (NULL);
 }

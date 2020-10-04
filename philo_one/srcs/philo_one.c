@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo_one.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 22:28:00 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/04 03:18:09 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,14 @@ static t_philosopher	*init_philosophers(
 		philosophers[i] = (t_philosopher){.number = i + 1, .simulation = sim};
 		pthread_create(&philosophers[i].itsme, NULL,
 			(void*)routine, (void*)&philosophers[i]);
-		usleep(100);
+		usleep(50);
+		i++;
+	}
+	i = 0;
+	while (i < number_of_philosopher)
+	{
+		pthread_create(&philosophers[i].monitor, NULL,
+			(void*)monitor_func, (void*)&philosophers[i]);
 		i++;
 	}
 	return (philosophers);
@@ -86,22 +93,21 @@ static pthread_mutex_t	*init_forks(
 ** @return a pointer to the simulations datas structure.
 */
 
+# include <stdio.h>
+
 static t_simulation		*init_simulation(
 	int argc,
 	char **argv
 )
 {
 	t_simulation		*simulation;
-	struct timeval		start_time;
 	pthread_mutex_t		can_write;
 
-	gettimeofday(&start_time, NULL);
 	pthread_mutex_init(&can_write, NULL);
 	if (!(simulation = malloc(sizeof(t_simulation))))
 		return (NULL);
 	memset(simulation, 0, sizeof(t_simulation));
 	simulation->have_a_death = 0;
-	simulation->start_time = start_time;
 	simulation->can_write = can_write;
 	simulation->forks = init_forks(ft_atolu(argv[1]));
 	simulation->number_of_philosopher = ft_atolu(argv[1]);
@@ -111,6 +117,7 @@ static t_simulation		*init_simulation(
 	simulation->each_must_eat = -1;
 	if (argc == 6)
 		simulation->each_must_eat = ft_atolu(argv[5]);
+	simulation->start_time = get_actual_time();
 	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
 	return (simulation);
 }
@@ -182,9 +189,12 @@ int						main(
 	if (!simulation->forks)
 		return (__INIT_FORKS);
 	while (i < simulation->number_of_philosopher)
+		pthread_join(simulation->philosophers[i++].monitor, NULL);
+	i = 0;
+	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].itsme, NULL);
 	pthread_mutex_destroy(&simulation->can_write);
-	write(1, ended, ft_strlen(ended));
+	// write(1, ended, ft_strlen(ended));
 	free_simulation(simulation);
 	return (__SUCCESS);
 }

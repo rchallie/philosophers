@@ -3,81 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   monitor.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 22:04:50 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 23:24:15 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/04 03:10:52 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
-
-/*
-** @brief Print a message with timestamp, philosopher
-** number and reset the value for which the message
-** was printed.
-**
-** @param timestamp the timestamp.
-** @param philosopher_number the philosopher number.
-** @param message the message to print.
-** @param value_to_reset the value to reset.
-*/
-
-static void		print_msg(
-	long unsigned timestamp,
-	int philosopher_number,
-	char *message,
-	int *value_to_reset
-)
-{
-	char	*buff_timestamp;
-	char	*buff_philo_number;
-
-	buff_timestamp = ft_lutoa(timestamp);
-	buff_philo_number = ft_lutoa((long unsigned)philosopher_number);
-	write(1, buff_timestamp, ft_strlen(buff_timestamp));
-	write(1, " ", 1);
-	write(1, buff_philo_number, ft_strlen(buff_philo_number));
-	write(1, " ", 1);
-	write(1, message, ft_strlen(message));
-	write(1, "\n", 1);
-	if (value_to_reset)
-		*value_to_reset = 0;
-	free(buff_timestamp);
-	free(buff_philo_number);
-}
-
-/*
-** @brief Check states status of philosopher
-** and print the message associate. This is
-** a critical part of the message the it's
-** protected by mutexs.
-**
-** @param philosopher the philosopher.
-*/
-
-static void		phi_messages(
-	t_philosopher *philosopher
-)
-{
-	pthread_mutex_lock(&philosopher->simulation->can_write);
-	if (philosopher->is_thinking == 1)
-		print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "is thinking", &philosopher->is_thinking);
-	if (philosopher->take_fork_l == 1)
-		print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "has taken a fork", &philosopher->take_fork_l);
-	if (philosopher->take_fork_r == 1)
-		print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "has taken a fork", &philosopher->take_fork_r);
-	if (philosopher->is_eating == 1)
-		print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "is eating", &philosopher->is_eating);
-	if (philosopher->is_sleeping == 1)
-		print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "is sleeping", &philosopher->is_sleeping);
-	pthread_mutex_unlock(&philosopher->simulation->can_write);
-}
 
 /*
 ** @brief Check if the philosopher ate enought.
@@ -89,18 +22,18 @@ static void		phi_messages(
 ** @return 1 if the philosopher ate enought else 0.
 */
 
-static int		ate_enought(
-	t_philosopher *philosopher
-)
-{
-	if (philosopher->simulation->each_must_eat != -1 &&
-		philosopher->number_meal >= philosopher->simulation->each_must_eat)
-	{
-		pthread_mutex_unlock(&philosopher->simulation->can_write);
-		return (1);
-	}
-	return (0);
-}
+// static int		ate_enought(
+// 	t_philosopher *philosopher
+// )
+// {
+// 	if (philosopher->simulation->each_must_eat != -1 &&
+// 		philosopher->number_meal >= philosopher->simulation->each_must_eat)
+// 	{
+// 		pthread_mutex_unlock(&philosopher->simulation->can_write);
+// 		return (1);
+// 	}
+// 	return (0);
+// }
 
 /*
 ** @brief Check philosopher vital constants.
@@ -117,25 +50,22 @@ void			*monitor_func(
 )
 {
 	t_philosopher	*philosopher;
-	struct timeval	actual;
 
 	philosopher = (t_philosopher*)phi;
 	while (42 && philosopher->simulation->have_a_death == 0)
 	{
-		gettimeofday(&actual, NULL);
-		if (get_time_diff(actual, philosopher->last_time_eated)
-			> philosopher->simulation->time_to_die * 1000
-			&& philosopher->is_on_eat != 1)
+		if ((philosopher->simulation->each_must_eat != -1
+			&& philosopher->number_meal
+			>= philosopher->simulation->each_must_eat) || philosopher->simulation->have_a_death == 1)
+			break ;
+		if ((get_actual_time() - philosopher->last_time_eated)
+			> philosopher->simulation->time_to_die)
 		{
-			pthread_mutex_lock(&philosopher->simulation->can_write);
-			print_msg(get_timestamp(philosopher->simulation->start_time),
-			philosopher->number, "died", NULL);
 			philosopher->simulation->have_a_death = 1;
+			philosopher->is_died = 1;
+			print_msg(philosopher, "died");
 			break ;
 		}
-		phi_messages(philosopher);
-		if (ate_enought(philosopher) == 1)
-			break ;
 		usleep(1000);
 	}
 	return (NULL);

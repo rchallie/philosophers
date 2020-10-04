@@ -3,14 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   time.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:07:17 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 19:56:28 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/04 01:59:13 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
+
+long unsigned get_actual_time()
+{
+	struct timeval actual;
+
+	gettimeofday(&actual, NULL);
+	return (actual.tv_sec * 1000 + actual.tv_usec / 1000);
+}
 
 /*
 ** @brief Get the difference between two timeval
@@ -22,12 +30,11 @@
 */
 
 long unsigned	get_time_diff(
-	struct timeval a,
-	struct timeval b
+	long unsigned a,
+	long unsigned b
 )
 {
-	return (((a.tv_sec * 1000000) + a.tv_usec)
-			- ((b.tv_sec * 1000000) + b.tv_usec));
+	return (a - b);
 }
 
 /*
@@ -38,14 +45,12 @@ long unsigned	get_time_diff(
 */
 
 long unsigned	get_timestamp(
-	struct timeval start_time
+	long unsigned start_time
 )
 {
-	struct timeval actual;
-
-	gettimeofday(&actual, NULL);
-	return (get_time_diff(actual, start_time) / 1000);
+	return (get_time_diff(get_actual_time(), start_time));
 }
+
 
 /*
 ** @brief Wait for a duration in microseconds.
@@ -56,16 +61,12 @@ long unsigned	get_timestamp(
 */
 
 void			wait_for(
-	struct timeval start,
 	long unsigned time
 )
 {
-	struct timeval actual;
+	long unsigned start;
 
-	gettimeofday(&actual, NULL);
-	while (get_time_diff(actual, start) < time)
-	{
-		usleep(1000);
-		gettimeofday(&actual, NULL);
-	}
+	start = get_actual_time();
+	while (get_actual_time() - start < time)
+		usleep(500);
 }

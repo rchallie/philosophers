@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo_one.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 11:45:12 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 20:56:02 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/04 03:08:30 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 # include <sys/time.h>
 # include <string.h>
 
+#include <stdio.h>
+
 # define __SUCCESS 0
 # define __SIMULATION_MALLOC 1
 # define __INIT_FORKS 2
@@ -30,22 +32,16 @@ typedef struct			s_philosopher
 {
 	int					number;
 	int					number_meal;
-	int					is_thinking;
-	int					is_eating;
-	int					is_on_eat;
-	int					is_sleeping;
-	int					take_fork_l;
-	int					take_fork_r;
+	int 				is_died;
 	pthread_t			monitor;
-	pthread_t			stomack;
 	pthread_t			itsme;
-	struct timeval		last_time_eated;
+	long unsigned		last_time_eated;
 	struct s_simulation	*simulation;
 }						t_philosopher;
 
 typedef struct			s_simulation
 {
-	struct timeval		start_time;
+	long unsigned		start_time;
 	pthread_mutex_t		can_write;
 	int					have_a_death;
 	pthread_mutex_t		*forks;
@@ -57,9 +53,15 @@ typedef struct			s_simulation
 	int					each_must_eat;
 }						t_simulation;
 
-long unsigned			get_time_diff(struct timeval a, struct timeval b);
-long unsigned			get_timestamp(struct timeval start_time);
-void					wait_for(struct timeval start, long unsigned time);
+long unsigned	get_time_diff(
+	long unsigned a,
+	long unsigned b
+);
+long unsigned	get_timestamp(
+	long unsigned
+);
+long unsigned get_actual_time();
+void					wait_for(long unsigned time);
 
 long unsigned			ft_atolu(char *str);
 char					*ft_lutoa(long unsigned nbr);
@@ -68,5 +70,10 @@ int						ft_strlen(char *str);
 void					*routine(void *phi);
 
 void					*monitor_func(void *phi);
+
+ void		print_msg(
+	t_philosopher *phi,
+	char *message
+);
 
 #endif
