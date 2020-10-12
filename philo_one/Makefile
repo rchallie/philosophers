@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+         #
+#    By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/04/01 21:13:09 by excalibur         #+#    #+#              #
-#    Updated: 2020/04/08 23:46:24 by excalibur        ###   ########.fr        #
+#    Updated: 2020/10/07 00:15:54 by rchallie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,8 @@ SRCS = 	philo_one.c		\
 		time.c			\
 		utils.c			\
 		philosopher.c	\
+		error.c			\
+		init.c			\
 		monitor.c
 # ==============================================================================
 

@@ -3,89 +3,41 @@
 /*                                                        :::      ::::::::   */
 /*   philo_two.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 22:28:17 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/11 23:07:53 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_two.h"
 
-/*
-**	@brief Initialise the philosophers for the
-**	simulation.
-**
-** @param sim the pointer to the simulation
-** struct.
-** @param number_of_philosopher if the number of
-** philosopher in the simulation.
-** @return a pointer to the philosopher array.
-** If an error append during mallocs, a null pointer
-** will be returned.
-*/
-
-static t_philosopher	*init_philosophers(
-	t_simulation *sim,
-	long unsigned number_of_philosopher
+int			create_philosophers_threads(
+	t_philosopher *philosophers,
+	int number_of_philosopher
 )
 {
-	long unsigned		i;
-	t_philosopher		*philosophers;
+	int i;
 
-	i = 0;
-	if (!(philosophers = malloc(sizeof(t_philosopher) * number_of_philosopher)))
-		return (NULL);
-	memset(philosophers, 0, sizeof(t_philosopher) * number_of_philosopher);
-	while (i < number_of_philosopher)
+	i = -1;
+	while (++i < number_of_philosopher)
 	{
-		philosophers[i] = (t_philosopher){.number = i + 1, .simulation = sim};
-		pthread_create(&philosophers[i].itsme, NULL,
-			(void*)routine, (void*)&philosophers[i]);
-		usleep(100);
-		i++;
+		if (!(i % 2))
+			if (pthread_create(&philosophers[i].itsme, NULL,
+				(void*)routine, (void*)&philosophers[i]))
+				return (1);
+		usleep(70);
 	}
-	return (philosophers);
-}
-
-/*
-** @brief Init the simulation and all its data.
-**
-** @param argc the number pasted in the command
-** line.
-** @param argv the arguments pasted in the command
-** line. (See main for description of each).
-** @return a pointer to the simulations datas structure.
-*/
-
-static t_simulation		*init_simulation(
-	int argc,
-	char **argv
-)
-{
-	t_simulation		*simulation;
-	struct timeval		start_time;
-	sem_t				can_write;
-
-	gettimeofday(&start_time, NULL);
-	sem_init(&can_write, 0, 1);
-	if (!(simulation = malloc(sizeof(t_simulation))))
-		return (NULL);
-	memset(simulation, 0, sizeof(t_simulation));
-	simulation->have_a_death = 0;
-	simulation->start_time = start_time;
-	simulation->can_write = can_write;
-	simulation->number_of_philosopher = ft_atolu(argv[1]);
-	simulation->forks = sem_open("/forks",
-				O_CREAT, 0644, ft_atolu(argv[1]));
-	simulation->time_to_die = ft_atolu(argv[2]);
-	simulation->time_to_eat = ft_atolu(argv[3]);
-	simulation->time_to_sleep = ft_atolu(argv[4]);
-	simulation->each_must_eat = -1;
-	if (argc == 6)
-		simulation->each_must_eat = ft_atolu(argv[5]);
-	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
-	return (simulation);
+	i = -1;
+	while (++i < number_of_philosopher)
+	{
+		if (i % 2)
+			if (pthread_create(&philosophers[i].itsme, NULL,
+				(void*)routine, (void*)&philosophers[i]))
+				return (1);
+		usleep(70);
+	}
+	return (0);
 }
 
 /*
@@ -94,22 +46,53 @@ static t_simulation		*init_simulation(
 ** @param sim a pointer to the simulation.
 */
 
-void					free_simulation(
+void		free_simulation(
 	t_simulation *sim
 )
 {
 	long unsigned i;
 
 	i = 0;
-	free(sim->philosophers);
+	while (i < sim->number_of_philosopher)
+	{
+		sem_close(sim->philosophers[i].eating);
+		(sim->philosophers[i].eating_name)
+			? free(sim->philosophers[i].eating_name) : 0;
+		i++;
+	}
+	sem_close(sim->can_write);
 	sem_close(sim->forks);
-	free(sim);
+	sem_unlink("/forks");
+	sem_unlink("/canwrite");
+	(sim->have_a_death) ? free(sim->have_a_death) : 0;
+	(sim->philosophers) ? free(sim->philosophers) : 0;
+	(sim) ? free(sim) : 0;
+}
+
+static int	check_arguments(int argc, char **argv)
+{
+	int i;
+	int j;
+
+	i = 1;
+	while (i < argc)
+	{
+		j = 0;
+		while (argv[i] && argv[i][j])
+		{
+			if (!(argv[i][j] >= 48 && argv[i][j] <= 57))
+				return (__COMMAND_ARGUMENTS);
+			j++;
+		}
+		i++;
+	}
+	return (__SUCCESS);
 }
 
 /*
-** @brief philo_one of Philosophers project
+** @brief philo_two of Philosophers project
 ** from 42School. Basicaly the dining philosopher
-** problem, with obligation like use semaphores,
+** problem, with obligation like use semaphore,
 ** philosophers can't speak between them, time of
 ** death, defined sleeping time, and the simulation
 ** is ended with the death of an philosopher or
@@ -130,27 +113,34 @@ void					free_simulation(
 ** datas return NULL, __INIT_PHILOSOPHERS if the
 ** philosophers datas had an error (malloc error)
 ** __INIT_FORKS if the forks datas had an error
-** (malloc error or semaphores initialisation).
+** (malloc error or semaphore initialisation).
 */
 
-int						main(
+int			main(
 	int argc,
 	char **argv
 )
 {
 	t_simulation	*simulation;
 	long unsigned	i;
-	char			*ended;
 
 	i = 0;
+	if (argc < 5 || argc > 6)
+		return (error_command_argument());
+	else if (check_arguments(argc, argv) == __COMMAND_ARGUMENTS)
+		return (error_bad_argument());
 	sem_unlink("/forks");
-	ended = "Simulation ended\n";
+	sem_unlink("/canwrite");
 	simulation = init_simulation(argc, argv);
 	if (!simulation->philosophers)
-		return (__INIT_PHILOSOPHERS);
+		return (error_init_philosophers());
+	if (!simulation->forks)
+		return (error_init_forks());
+	while (i < simulation->number_of_philosopher)
+		pthread_join(simulation->philosophers[i++].monitor, NULL);
+	i = 0;
 	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].itsme, NULL);
-	write(1, ended, ft_strlen(ended));
 	free_simulation(simulation);
 	return (__SUCCESS);
 }

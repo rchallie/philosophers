@@ -6,34 +6,20 @@
 /*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 22:04:50 by excalibur         #+#    #+#             */
-/*   Updated: 2020/10/04 03:10:52 by rchallie         ###   ########.fr       */
+/*   Updated: 2020/10/06 22:16:16 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
 
-/*
-** @brief Check if the philosopher ate enought.
-** The element of comparasion is the each_must_eat.
-** If each_must_eat is not defined (-1) he will never
-** ate_enought.
-**
-** @param philosopher the philosopher.
-** @return 1 if the philosopher ate enought else 0.
-*/
-
-// static int		ate_enought(
-// 	t_philosopher *philosopher
-// )
-// {
-// 	if (philosopher->simulation->each_must_eat != -1 &&
-// 		philosopher->number_meal >= philosopher->simulation->each_must_eat)
-// 	{
-// 		pthread_mutex_unlock(&philosopher->simulation->can_write);
-// 		return (1);
-// 	}
-// 	return (0);
-// }
+static void		death(
+	t_philosopher *philosopher
+)
+{
+	*philosopher->have_a_death = 1;
+	philosopher->is_died = 1;
+	print_msg(philosopher, "died\n");
+}
 
 /*
 ** @brief Check philosopher vital constants.
@@ -52,20 +38,20 @@ void			*monitor_func(
 	t_philosopher	*philosopher;
 
 	philosopher = (t_philosopher*)phi;
-	while (42 && philosopher->simulation->have_a_death == 0)
+	while (42 && *philosopher->have_a_death == 0)
 	{
-		if ((philosopher->simulation->each_must_eat != -1
-			&& philosopher->number_meal
-			>= philosopher->simulation->each_must_eat) || philosopher->simulation->have_a_death == 1)
+		if (philosopher->is_died == 1)
 			break ;
+		pthread_mutex_lock(&philosopher->eating);
 		if ((get_actual_time() - philosopher->last_time_eated)
-			> philosopher->simulation->time_to_die)
+			> philosopher->time_to_die)
 		{
-			philosopher->simulation->have_a_death = 1;
-			philosopher->is_died = 1;
-			print_msg(philosopher, "died");
+			if (*philosopher->have_a_death != 1)
+				death(philosopher);
+			pthread_mutex_unlock(&philosopher->eating);
 			break ;
 		}
+		pthread_mutex_unlock(&philosopher->eating);
 		usleep(1000);
 	}
 	return (NULL);

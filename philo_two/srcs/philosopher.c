@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philosopher.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:18:48 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/09 20:20:12 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/11 20:23:30 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,18 +24,20 @@ static void		eat(
 	t_philosopher *philosopher
 )
 {
-	sem_wait(philosopher->simulation->forks);
-	philosopher->take_fork_l = 1;
-	sem_wait(philosopher->simulation->forks);
-	philosopher->take_fork_r = 1;
-	philosopher->is_on_eat = 1;
-	philosopher->is_eating = 1;
-	gettimeofday(&philosopher->last_time_eated, NULL);
-	wait_for(philosopher->last_time_eated,
-		philosopher->simulation->time_to_eat * 1000);
-	philosopher->is_on_eat = 0;
-	sem_post(philosopher->simulation->forks);
-	sem_post(philosopher->simulation->forks);
+	sem_wait(philosopher->forks);
+	print_msg(philosopher, "has taken a fork\n");
+	sem_wait(philosopher->forks);
+	print_msg(philosopher, "has taken a fork\n");
+	if (*philosopher->have_a_death != 1)
+	{
+		sem_wait(philosopher->eating);
+		print_msg(philosopher, "eating\n");
+		philosopher->last_time_eated = get_actual_time();
+		wait_for(philosopher->time_to_eat);
+		sem_post(philosopher->eating);
+	}
+	sem_post(philosopher->forks);
+	sem_post(philosopher->forks);
 	philosopher->number_meal++;
 }
 
@@ -57,24 +59,23 @@ void			*routine(
 )
 {
 	t_philosopher	*philosopher;
-	struct timeval	start;
 
 	philosopher = (t_philosopher*)phi;
-	gettimeofday(&philosopher->last_time_eated, NULL);
-	pthread_create(&philosopher->monitor, NULL,
-		(void*)monitor_func, (void*)philosopher);
-	pthread_detach(philosopher->monitor);
-	while (42 && philosopher->simulation->have_a_death == 0)
+	while (42 && *philosopher->have_a_death == 0)
 	{
-		philosopher->is_thinking = 1;
 		eat(philosopher);
-		if (philosopher->simulation->each_must_eat != -1
-			&& philosopher->number_meal
-			>= philosopher->simulation->each_must_eat)
+		if (*philosopher->have_a_death == 1
+			|| (philosopher->each_must_eat != -1 && philosopher->number_meal
+			>= philosopher->each_must_eat))
+		{
+			philosopher->is_died = 1;
 			break ;
-		philosopher->is_sleeping = 1;
-		gettimeofday(&start, NULL);
-		wait_for(start, philosopher->simulation->time_to_sleep);
+		}
+		print_msg(philosopher, "sleeping\n");
+		if (*philosopher->have_a_death == 1)
+			break ;
+		wait_for(philosopher->time_to_sleep);
+		print_msg(philosopher, "thinking\n");
 	}
 	return (NULL);
 }

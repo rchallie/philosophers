@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+        */
+/*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:28:00 by excalibur         #+#    #+#             */
-/*   Updated: 2020/04/08 20:05:41 by excalibur        ###   ########.fr       */
+/*   Updated: 2020/10/11 20:40:59 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
+#include "../incs/philo_two.h"
 
 /*
 ** @brief Get the length of the string.
@@ -20,7 +20,7 @@
 */
 
 int				ft_strlen(
-	char *str
+	const char *str
 )
 {
 	int i;
@@ -89,4 +89,74 @@ char			*ft_lutoa(
 			nbr_save /= 10;
 		}
 	return (rtn);
+}
+
+size_t			ft_strlcpy(
+	char *dst,
+	const char *src,
+	size_t dstsize
+)
+{
+	size_t i;
+	size_t src_len;
+
+	i = 0;
+	if (!dst || !src)
+		return (0);
+	src_len = ft_strlen(src);
+	if (!dstsize)
+		return (src_len);
+	while (src[i] != '\0' && i < dstsize)
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	if (dstsize < src_len)
+		dst[dstsize - 1] = '\0';
+	else if (dstsize != 0)
+		dst[i] = '\0';
+	return (src_len);
+}
+
+/*
+** @brief Print a message with timestamp, philosopher
+** number and reset the value for which the message
+** was printed.
+**
+** @param timestamp the timestamp.
+** @param philosopher_number the philosopher number.
+** @param message the message to print.
+** @param value_to_reset the value to reset.
+*/
+
+void			print_msg(
+	t_philosopher *phi,
+	char *message
+)
+{
+	char	buffer[100];
+	char	*buff_timestamp;
+	char	*buff_phi_number;
+	int		j;
+
+	j = 0;
+	memset(buffer, '\0', 100);
+	if (*phi->have_a_death == 1 && phi->is_died != 1)
+		return ;
+	else if (phi->is_died)
+		phi->is_died = 0;
+	buff_timestamp = ft_lutoa(get_timestamp(phi->start_time));
+	buff_phi_number = ft_lutoa((long unsigned)phi->number);
+	j = ft_strlcpy(buffer, buff_timestamp, ft_strlen(buff_timestamp));
+	memset(buffer + j++, ' ', 1);
+	j += ft_strlcpy(buffer + j, buff_phi_number, ft_strlen(buff_phi_number));
+	memset(buffer + j++, ' ', 1);
+	j += ft_strlcpy(buffer + j, message, ft_strlen(message));
+	j = 0;
+	sem_wait(phi->can_write);
+	while (buffer[j])
+		write(1, &buffer[j++], 1);
+	sem_post(phi->can_write);
+	(buff_timestamp) ? free(buff_timestamp) : 0;
+	(buff_phi_number) ? free(buff_phi_number) : 0;
 }

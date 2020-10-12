@@ -6,11 +6,10 @@
 /*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:28:00 by excalibur         #+#    #+#             */
-/*   Updated: 2020/10/04 03:14:10 by rchallie         ###   ########.fr       */
+/*   Updated: 2020/10/11 20:01:16 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
 #include "../incs/philo_one.h"
 
 /*
@@ -21,7 +20,7 @@
 */
 
 int				ft_strlen(
-	char *str
+	const char *str
 )
 {
 	int i;
@@ -92,10 +91,31 @@ char			*ft_lutoa(
 	return (rtn);
 }
 
-void	ft_putstr(char *s)
+size_t			ft_strlcpy(
+	char *dst,
+	const char *src,
+	size_t dstsize
+)
 {
-	while (s && *s)
-		write(1, s++, 1);
+	size_t i;
+	size_t src_len;
+
+	i = 0;
+	if (!dst || !src)
+		return (0);
+	src_len = ft_strlen(src);
+	if (!dstsize)
+		return (src_len);
+	while (src[i] != '\0' && i < dstsize)
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	if (dstsize < src_len)
+		dst[dstsize - 1] = '\0';
+	else if (dstsize != 0)
+		dst[i] = '\0';
+	return (src_len);
 }
 
 /*
@@ -109,39 +129,34 @@ void	ft_putstr(char *s)
 ** @param value_to_reset the value to reset.
 */
 
- void		print_msg(
+void			print_msg(
 	t_philosopher *phi,
 	char *message
 )
 {
 	char	buffer[100];
 	char	*buff_timestamp;
-	char	*buff_philo_number;
-	
-	if (phi->simulation->have_a_death == 1 && phi->is_died != 1)
+	char	*buff_phi_number;
+	int		j;
+
+	j = 0;
+	memset(buffer, '\0', 100);
+	if (*phi->have_a_death == 1 && phi->is_died != 1)
 		return ;
 	else if (phi->is_died)
 		phi->is_died = 0;
-	buff_timestamp = ft_lutoa(get_actual_time() - phi->simulation->start_time);
-	buff_philo_number = ft_lutoa((long unsigned)phi->number);
-	memset(buffer, '\0', 100);
-	
-	int i = 0;
-	int j = 0;
-	while (buff_timestamp && *(buff_timestamp + i))
-		buffer[j++] = buff_timestamp[i++];
-	buffer[j++] = ' ';
-	i = 0;
-	while (buff_philo_number && *(buff_philo_number + i))
-		buffer[j++] = buff_philo_number[i++];
-	buffer[j++] = ' ';
-	i = 0;
-	while (message && *(message + i))
-		buffer[j++] = message[i++];
-	buffer[j++] = '\n';
-	pthread_mutex_lock(&phi->simulation->can_write);
-	ft_putstr(buffer);
-	pthread_mutex_unlock(&phi->simulation->can_write);
-	free(buff_timestamp);
-	free(buff_philo_number);
+	buff_timestamp = ft_lutoa(get_timestamp(phi->start_time));
+	buff_phi_number = ft_lutoa((long unsigned)phi->number);
+	j = ft_strlcpy(buffer, buff_timestamp, ft_strlen(buff_timestamp));
+	memset(buffer + j++, ' ', 1);
+	j += ft_strlcpy(buffer + j, buff_phi_number, ft_strlen(buff_phi_number));
+	memset(buffer + j++, ' ', 1);
+	j += ft_strlcpy(buffer + j, message, ft_strlen(message));
+	j = 0;
+	pthread_mutex_lock(phi->can_write);
+	while (buffer[j])
+		write(1, &buffer[j++], 1);
+	pthread_mutex_unlock(phi->can_write);
+	(buff_timestamp) ? free(buff_timestamp) : 0;
+	(buff_phi_number) ? free(buff_phi_number) : 0;
 }

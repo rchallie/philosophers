@@ -6,120 +6,38 @@
 /*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/06 16:30:33 by excalibur         #+#    #+#             */
-/*   Updated: 2020/10/04 03:18:09 by rchallie         ###   ########.fr       */
+/*   Updated: 2020/10/11 23:05:38 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
 
-/*
-**	@brief Initialise the philosophers for the
-**	simulation.
-**
-** @param sim the pointer to the simulation
-** struct.
-** @param number_of_philosopher if the number of
-** philosopher in the simulation.
-** @return a pointer to the philosopher array.
-** If an error append during mallocs, a null pointer
-** will be returned.
-*/
-
-static t_philosopher	*init_philosophers(
-	t_simulation *sim,
-	long unsigned number_of_philosopher
+int			create_philosophers_threads(
+	t_philosopher *philosophers,
+	int number_of_philosopher
 )
 {
-	long unsigned		i;
-	t_philosopher		*philosophers;
+	int i;
 
-	i = 0;
-	if (!(philosophers = malloc(sizeof(t_philosopher) * number_of_philosopher))
-		|| !sim->forks)
-		return (NULL);
-	memset(philosophers, 0, sizeof(t_philosopher) * number_of_philosopher);
-	while (i < number_of_philosopher)
+	i = -1;
+	while (++i < number_of_philosopher)
 	{
-		philosophers[i] = (t_philosopher){.number = i + 1, .simulation = sim};
-		pthread_create(&philosophers[i].itsme, NULL,
-			(void*)routine, (void*)&philosophers[i]);
-		usleep(50);
-		i++;
+		if (!(i % 2))
+			if (pthread_create(&philosophers[i].itsme, NULL,
+				(void*)routine, (void*)&philosophers[i]))
+				return (1);
+		usleep(70);
 	}
-	i = 0;
-	while (i < number_of_philosopher)
+	i = -1;
+	while (++i < number_of_philosopher)
 	{
-		pthread_create(&philosophers[i].monitor, NULL,
-			(void*)monitor_func, (void*)&philosophers[i]);
-		i++;
+		if (i % 2)
+			if (pthread_create(&philosophers[i].itsme, NULL,
+				(void*)routine, (void*)&philosophers[i]))
+				return (1);
+		usleep(70);
 	}
-	return (philosophers);
-}
-
-/*
-** @brief Init the forks for the simulation.
-**
-** @param number_of_philosopher the number
-**	of philosopher in the simulation.
-** @return a pointer to the mutex (forks) array.
-** If an error append during mallocs or mutexs
-** initialisation, a null pointer will be returned.
-*/
-
-static pthread_mutex_t	*init_forks(
-	long unsigned number_of_philosopher
-)
-{
-	long unsigned		i;
-	pthread_mutex_t		*forks;
-
-	i = 0;
-	if (!(forks = malloc(sizeof(pthread_mutex_t) * number_of_philosopher)))
-		return (NULL);
-	memset(forks, 0, sizeof(pthread_mutex_t) * number_of_philosopher);
-	while (i < number_of_philosopher)
-		if (pthread_mutex_init(&forks[i++], NULL))
-			return (NULL);
-	return (forks);
-}
-
-/*
-** @brief Init the simulation and all its data.
-**
-** @param argc the number pasted in the command
-** line.
-** @param argv the arguments pasted in the command
-** line. (See main for description of each).
-** @return a pointer to the simulations datas structure.
-*/
-
-# include <stdio.h>
-
-static t_simulation		*init_simulation(
-	int argc,
-	char **argv
-)
-{
-	t_simulation		*simulation;
-	pthread_mutex_t		can_write;
-
-	pthread_mutex_init(&can_write, NULL);
-	if (!(simulation = malloc(sizeof(t_simulation))))
-		return (NULL);
-	memset(simulation, 0, sizeof(t_simulation));
-	simulation->have_a_death = 0;
-	simulation->can_write = can_write;
-	simulation->forks = init_forks(ft_atolu(argv[1]));
-	simulation->number_of_philosopher = ft_atolu(argv[1]);
-	simulation->time_to_die = ft_atolu(argv[2]);
-	simulation->time_to_eat = ft_atolu(argv[3]);
-	simulation->time_to_sleep = ft_atolu(argv[4]);
-	simulation->each_must_eat = -1;
-	if (argc == 6)
-		simulation->each_must_eat = ft_atolu(argv[5]);
-	simulation->start_time = get_actual_time();
-	simulation->philosophers = init_philosophers(simulation, ft_atolu(argv[1]));
-	return (simulation);
+	return (0);
 }
 
 /*
@@ -128,7 +46,7 @@ static t_simulation		*init_simulation(
 ** @param sim a pointer to the simulation.
 */
 
-void					free_simulation(
+void		free_simulation(
 	t_simulation *sim
 )
 {
@@ -138,11 +56,35 @@ void					free_simulation(
 	while (i < sim->number_of_philosopher)
 	{
 		pthread_mutex_destroy(&sim->forks[i]);
+		pthread_mutex_destroy(&(sim->philosophers[i].eating));
 		i++;
 	}
-	free(sim->philosophers);
-	free(sim->forks);
-	free(sim);
+	pthread_mutex_destroy(sim->can_write);
+	(sim->can_write) ? free(sim->can_write) : 0;
+	(sim->have_a_death) ? free(sim->have_a_death) : 0;
+	(sim->philosophers) ? free(sim->philosophers) : 0;
+	(sim->forks) ? free(sim->forks) : 0;
+	(sim) ? free(sim) : 0;
+}
+
+static int	check_arguments(int argc, char **argv)
+{
+	int i;
+	int j;
+
+	i = 1;
+	while (i < argc)
+	{
+		j = 0;
+		while (argv[i] && argv[i][j])
+		{
+			if (!(argv[i][j] >= 48 && argv[i][j] <= 57))
+				return (__COMMAND_ARGUMENTS);
+			j++;
+		}
+		i++;
+	}
+	return (__SUCCESS);
 }
 
 /*
@@ -172,29 +114,29 @@ void					free_simulation(
 ** (malloc error or mutex initialisation).
 */
 
-int						main(
+int			main(
 	int argc,
 	char **argv
 )
 {
 	t_simulation	*simulation;
 	long unsigned	i;
-	char			*ended;
 
 	i = 0;
-	ended = "Simulation ended\n";
+	if (argc < 5 || argc > 6)
+		return (error_command_argument());
+	else if (check_arguments(argc, argv) == __COMMAND_ARGUMENTS)
+		return (error_bad_argument());
 	simulation = init_simulation(argc, argv);
 	if (!simulation->philosophers)
-		return (__INIT_PHILOSOPHERS);
+		return (error_init_philosophers());
 	if (!simulation->forks)
-		return (__INIT_FORKS);
+		return (error_init_forks());
 	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].monitor, NULL);
 	i = 0;
 	while (i < simulation->number_of_philosopher)
 		pthread_join(simulation->philosophers[i++].itsme, NULL);
-	pthread_mutex_destroy(&simulation->can_write);
-	// write(1, ended, ft_strlen(ended));
 	free_simulation(simulation);
 	return (__SUCCESS);
 }

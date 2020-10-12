@@ -6,13 +6,13 @@
 /*   By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/04/07 12:07:17 by excalibur         #+#    #+#             */
-/*   Updated: 2020/10/04 01:59:13 by rchallie         ###   ########.fr       */
+/*   Updated: 2020/10/11 19:25:10 by rchallie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/philo_one.h"
 
-long unsigned get_actual_time()
+long unsigned	get_actual_time(void)
 {
 	struct timeval actual;
 
@@ -51,7 +51,6 @@ long unsigned	get_timestamp(
 	return (get_time_diff(get_actual_time(), start_time));
 }
 
-
 /*
 ** @brief Wait for a duration in microseconds.
 **
@@ -68,5 +67,5 @@ void			wait_for(
 
 	start = get_actual_time();
 	while (get_actual_time() - start < time)
-		usleep(500);
+		usleep(100);
 }

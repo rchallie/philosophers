@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+         #
+#    By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/04/01 21:13:09 by excalibur         #+#    #+#              #
-#    Updated: 2020/04/09 23:46:36 by excalibur        ###   ########.fr        #
+#    Updated: 2020/10/11 23:32:19 by rchallie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,11 +16,13 @@ NAME = philo_three
 
 # SRCS =========================================================================
 SRCS_DIR = srcs/
-SRCS = 	philo_three.c		\
+SRCS = 	philo_three.c	\
 		time.c			\
-		barbarian.c		\
 		utils.c			\
 		philosopher.c	\
+		error.c			\
+		init.c			\
+		init_2.c		\
 		monitor.c
 # ==============================================================================
 
@@ -68,13 +70,14 @@ re: fclean all
 # ==============================================================================
 
 # SUP ==========================================================================
-# Not a good idea, not sure about valgrind & thread compatibility.
+# Not a good idea, not sure about valgrind & thread compatibility
+# (TAKE SO MUCH TIME HUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUH) need a big time to die.
 leaks: $(NAME)
-	@valgrind --leak-check=yes  ./$(NAME) 4 410 200 200 2 || echo $$?
+	@valgrind --leak-check=yes  ./$(NAME) 4 800 200 200 1 || echo $$?
 
 run: $(NAME)
-	@./$(NAME) 4 405 200 200 || echo $$?
+	@./$(NAME) 4 420 200 200 || echo $$?
 
 runb: $(NAME)
-	@./$(NAME) 4 410 200 200 2 || echo $$?
+	@./$(NAME) 4 420 200 200 2 || echo $$?
 # ==============================================================================

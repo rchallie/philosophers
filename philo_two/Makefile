@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: excalibur <excalibur@student.42.fr>        +#+  +:+       +#+         #
+#    By: rchallie <rchallie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/04/01 21:13:09 by excalibur         #+#    #+#              #
-#    Updated: 2020/04/08 23:53:10 by excalibur        ###   ########.fr        #
+#    Updated: 2020/10/11 23:23:29 by rchallie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,6 +20,9 @@ SRCS = 	philo_two.c		\
 		time.c			\
 		utils.c			\
 		philosopher.c	\
+		error.c			\
+		init.c			\
+		init_2.c		\
 		monitor.c
 # ==============================================================================
 
@@ -67,13 +70,14 @@ re: fclean all
 # ==============================================================================
 
 # SUP ==========================================================================
-# Not a good idea, not sure about valgrind & thread compatibility.
+# Not a good idea, not sure about valgrind & thread compatibility
+# (TAKE SO MUCH TIME HUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUH) need a big time to die.
 leaks: $(NAME)
-	@valgrind --leak-check=yes  ./$(NAME) 4 410 200 200 2 || echo $$?
+	@valgrind --leak-check=yes  ./$(NAME) 4 800 200 200 1 || echo $$?
 
 run: $(NAME)
-	@./$(NAME) 4 480 200 200 || echo $$?
+	@./$(NAME) 4 420 200 200 || echo $$?
 
 runb: $(NAME)
-	@./$(NAME) 4 410 200 200 2 || echo $$?
+	@./$(NAME) 4 420 200 200 2 || echo $$?
 # ==============================================================================
